@@ -37,7 +37,7 @@ def printprogressbar(iteration, total, prefix='', suffix='', decimals=1, length=
     """
     Author: Greenstick on StackOverflow
     Source: https://stackoverflow.com/a/34325723
-
+    Edited to use f-strings
     Call in a loop to create terminal progress bar
     @params:
         iteration   - Required  : current iteration (Int)
@@ -48,10 +48,12 @@ def printprogressbar(iteration, total, prefix='', suffix='', decimals=1, length=
         length      - Optional  : character length of bar (Int)
         fill        - Optional  : bar fill character (Str)
     """
-    percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
+    # percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
+    percent = f"{100 * (iteration / float(total)):.{decimals}f}"
     filledlength = int(length * iteration // total)
     bar = fill * filledlength + '-' * (length - filledlength)
-    print('\r%s |%s| %s%% %s' % (prefix, bar, percent, suffix), end='\r')
+    # print('\r%s |%s| %s%% %s' % (prefix, bar, percent, suffix), end='\r')
+    print(f"\r{prefix} |{bar}| {percent}% {suffix}", end="\r")
     # Print New Line on Complete
     if iteration == total:
         print()
@@ -293,8 +295,8 @@ def get_hashes(contents, algorithm="sha1"):
         raise SystemExit
     verbose_print("Hashing all baseline contents", 1)
     hashes = []
-    l = len(contents)
-    printprogressbar(0, l, prefix='Progress:', suffix='Complete', length=50)
+    ln = len(contents)
+    verbose_print(printprogressbar(0, ln, prefix='Progress:', suffix='Complete', length=50), 1)
     for i, key in enumerate(contents):
         for thing in contents[key]:
             file = key + "/" + thing
@@ -314,7 +316,7 @@ def get_hashes(contents, algorithm="sha1"):
                 verbose_print(f"Permission Error for file {file}: skipping", 1)
             except OSError:
                 verbose_print(f"OS Error for {file}: skipping", 1)
-        printprogressbar(i + 1, l, prefix='Progress:', suffix='Complete', length=50)
+        verbose_print(printprogressbar(i + 1, ln, prefix='Progress:', suffix='Complete', length=50), 1)
     return frozenset(hashes)
 
 
