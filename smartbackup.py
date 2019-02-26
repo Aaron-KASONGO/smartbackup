@@ -103,40 +103,6 @@ class Cli:
         self.current_date = datetime.datetime.now()
         self.verbosity = 1
         self.log_error = False
-        # Check that the program was run with valid switches and arguments
-        """# This also maps the arguments to a dictionary
-        
-        self.check_switches()
-        self.src = self.args["-s"]
-        self.dst = self.args["-d"] + str(self.current_date.year) + "-" + \
-            str(self.current_date.month) + "-" + str(self.current_date.day) + ".1"
-        # If the -a switch is used
-        if "-a" in self.args:
-            # Get the baseline contents
-            verbose_print("Getting content to copy", 1)
-            self.source_contents = get_baseline(self.src)
-            # Copy all files from source to destination
-            verbose_print("Copying contents to destination", 1)
-            copyfiles(self.source_contents, self.src, self.dst)
-            verbose_print("Done", 1)
-            raise SystemExit
-        else:
-            verbose_print("Getting baseline contents", 1)
-            self.baseline_contents = get_baseline(self.args["-d"])
-            verbose_print("Hashing baseline contents", 1)
-            if "-h" in self.args:
-                self.baseline_hashes = get_hashes(self.baseline_contents, self.args["-h"])
-                verbose_print("Getting list of changed files", 1)
-                self.source_contents = compare_hashes(self.src, self.baseline_hashes, self.args["-h"])
-            else:
-                self.baseline_hashes = get_hashes(self.baseline_contents)
-                verbose_print("Getting list of changed files", 1)
-                self.source_contents = compare_hashes(self.src, self.baseline_hashes)
-            verbose_print("Copying contents to destination", 1)
-            copyfiles(self.source_contents, self.src, self.dst)
-            verbose_print("Done", 1)
-            raise SystemExit
-        """
 
     # Get all the switches used in the command line
     def check_switches(self):
@@ -185,7 +151,7 @@ class Cli:
                 # If the source directory uses backslashes
                 if "\\" in self.args["-s"]:
                     # Print error and quit the program
-                    verbose_print("Please do not use '\\', use '/' instead", 1)
+                    # verbose_print("Please do not use '\\', use '/' instead", 1)
                     self.args["-s"] = self.args["-s"].replace("\\", "/")
                 # Else, if the source directory does not include a forward slash at the end of the directory
                 if "/" not in list(self.args["-s"][-1]):
@@ -204,7 +170,7 @@ class Cli:
                 # If the destination directory uses backslashes
                 if "\\" in self.args["-d"]:
                     # Print error and quit
-                    verbose_print("Please do not use '\\', use '/' instead", 1)
+                    # verbose_print("Please do not use '\\', use '/' instead", 1)
                     self.args["-d"] = self.args["-d"].replace("\\", "/")
                 # If the destination directory does not include a forward slash at the end of the directory
                 if "/" not in list(self.args["-d"][-1]):
