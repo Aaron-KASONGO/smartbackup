@@ -250,19 +250,24 @@ def get_baseline(folder):
     return temp_baseline
 
 
-def get_hashes(contents, algorithm="sha1"):
+def get_hash_type(algorithm="sha1"):
     algorithm = algorithm.strip().lower()
     for alg in hashlib.algorithms_guaranteed:
         if algorithm == alg:
             algorithm = eval(compile(f"hashlib.{algorithm}()", '<string>', 'eval'))
-            break
+            return algorithm
     else:
-        print("Error invalid hash algorithm type")
-        raise SystemExit
+        verbose_print(f"Error: Invalid hash algorithm type: {algorithm}. Defaulting to sha1", 1)
+        algorithm = hashlib.sha1()
+        return algorithm
+
+
+def get_hashes(contents, algorithm="sha1"):
+    algorithm = get_hash_type(algorithm)
     verbose_print("Hashing all baseline contents", 1)
     hashes = []
     ln = len(contents)
-    verbose_print(printprogressbar(0, ln, prefix='Progress:', suffix='Complete', length=50), 1)
+    printprogressbar(0, ln, prefix='Progress:', suffix='Complete', length=50)
     for i, key in enumerate(contents):
         for thing in contents[key]:
             file = key + "/" + thing
@@ -282,19 +287,12 @@ def get_hashes(contents, algorithm="sha1"):
                 verbose_print(f"Permission Error for file {file}: skipping", 1)
             except OSError:
                 verbose_print(f"OS Error for {file}: skipping", 1)
-        verbose_print(printprogressbar(i + 1, ln, prefix='Progress:', suffix='Complete', length=50), 1)
+        printprogressbar(i + 1, ln, prefix='Progress:', suffix='Complete', length=50)
     return frozenset(hashes)
 
 
 def compare_hashes(folder, baseline_hashes, algorithm="sha1"):
-    algorithm = algorithm.strip().lower()
-    for alg in hashlib.algorithms_guaranteed:
-        if algorithm == alg:
-            algorithm = eval(compile(f"hashlib.{algorithm}()", '<string>', 'eval'))
-            break
-    else:
-        print("Error invalid hash algorithm type")
-        raise SystemExit
+    algorithm = get_hash_type(algorithm)
     num_dirs = []
     contents = {}
     for (dirpath, dirnames, filenames) in os.walk(folder):
