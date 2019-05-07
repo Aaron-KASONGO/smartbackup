@@ -200,17 +200,17 @@ class Cli:
             # Else, a source directory is specified
             else:
                 # If the source directory uses backslashes
-                if "\\" in self.args["-s"]:
+                # if "\\" in self.args["-s"]:
                     # Print error and quit the program
                     # verbose_print("Please do not use '\\', use '/' instead", 1)
-                    self.args["-s"] = self.args["-s"].replace("\\", "/")
+                    # self.args["-s"] = self.args["-s"].replace("\\", "/")
                 # Else, if the source directory does not include a forward slash at the end of the directory
-                if "/" not in list(self.args["-s"][-1]):
+                if "/" not in list(self.args["-s"][-1]) or '\\' not in list(self.args["-s"][-1]):
                     # Print error, but continue
-                    verbose_print("Missing / at end of source directory. "
-                                  "Please add a '/' at the end of the source directory next time", 1)
-                    # Append a forward slash to the source directory
-                    self.args["-s"] = self.args["-s"] + "/"
+                    verbose_print("Missing slash at end of source directory. "
+                                  "Please add a slash at the end of the source directory next time", 1)
+                    # Append a slash to the source directory
+                    self.args["-s"] = self.args["-s"] + slash
             # If a destination directory is not specified
             if "-d" not in self.args:
                 # Print error and quit the program
@@ -219,17 +219,17 @@ class Cli:
             # Else, a destination directory is specified
             else:
                 # If the destination directory uses backslashes
-                if "\\" in self.args["-d"]:
+                # if "\\" in self.args["-d"]:
                     # Print error and quit
                     # verbose_print("Please do not use '\\', use '/' instead", 1)
-                    self.args["-d"] = self.args["-d"].replace("\\", "/")
+                    # self.args["-d"] = self.args["-d"].replace("\\", "/")
                 # If the destination directory does not include a forward slash at the end of the directory
-                if "/" not in list(self.args["-d"][-1]):
+                if "/" not in list(self.args["-d"][-1]) or "\\" not in list(self.args["-d"][-1]):
                     # Print error, but continue
-                    verbose_print("Missing / at the end of destination directory. "
-                                  "Please add a '/' at the end of the destination directory next time", 1)
-                    # Append a forward slash to the destination directory
-                    self.args["-d"] = self.args["-d"] + "/"
+                    verbose_print("Missing slash at the end of destination directory. "
+                                  "Please add a slash at the end of the destination directory next time", 1)
+                    # Append a slash to the destination directory
+                    self.args["-d"] = self.args["-d"] + slash
         else:
             print("Too many arguments. Quitting")
             raise SystemExit
@@ -251,15 +251,15 @@ def verbose_print(msg, level):
             if "-l" in cli.args:
                 # Check if a file is specified or a directory is specified
                 path = cli.args["-l"]
-                if "\\" in path:
-                    path = path.replace("\\", "/")
                 pth = Path(path)
                 # If a file is specified, write directly
                 if pth.is_file():
                     write_log(msg, path)
                 # If a directory is specified, write to a default file "smartbackup.log"
                 elif pth.is_dir():
-                    write_log(msg, f"{path}/smartbackup.log")
+                    if "\\" not in list(path)[-1] or "/" not in list(path)[-1]:
+                        path = path + slash
+                    write_log(msg, f"{path}smartbackup.log")
                 # Path is not a directory nor a file, so it must not exist
                 else:
                     if not cli.log_error:
@@ -297,7 +297,7 @@ def get_baseline(folder):
     # Recursion
     if len(dir_list) > 0:
         for d in dir_list:
-            temp_baseline.update(get_baseline(folder + "/" + d))
+            temp_baseline.update(get_baseline(folder + slash + d))
     return temp_baseline
 
 
@@ -321,7 +321,7 @@ def get_hashes(contents, algorithm="sha1"):
     printprogressbar(0, ln, prefix='Progress:', suffix='Complete', length=50)
     for i, key in enumerate(contents):
         for thing in contents[key]:
-            file = key + "/" + thing
+            file = key + slash + thing
             verbose_print("Hashing " + file, 2)
             hsh = algorithm
             try:
@@ -351,7 +351,7 @@ def compare_hashes(folder, baseline_hashes, algorithm="sha1"):
         for dirs in dirnames:
             num_dirs.append(dirs)
         for file in filenames:
-            rf = folder + "/" + file
+            rf = folder + slash + file
             hsh = algorithm
             try:
                 with open(rf, "rb") as f:
@@ -378,7 +378,7 @@ def compare_hashes(folder, baseline_hashes, algorithm="sha1"):
         break
     if len(num_dirs) > 0:
         for d in num_dirs:
-            contents.update(compare_hashes(folder + "/" + d, baseline_hashes))
+            contents.update(compare_hashes(folder + slash + d, baseline_hashes))
     return contents
 
 
@@ -399,26 +399,29 @@ def copyfiles(contents, source, destination):
     for key in contents:
         source_replaced = key.replace(source, "")
         try:
-            verbose_print(f"Creating folder {destination}/{source_replaced}", 1)
-            os.mkdir(destination + "/" + source_replaced)
+            verbose_print(f"Creating folder {destination}{slash}{source_replaced}", 1)
+            os.mkdir(destination + slash + source_replaced)
         except FileNotFoundError:
-            verbose_print(f"Error, could not make directory {destination}/{source_replaced}", 1)
+            verbose_print(f"Error, could not make directory {destination}{slash}{source_replaced}", 1)
         except FileExistsError:
-            verbose_print(f"Error: Folder already exists: {destination}/{source_replaced}", 1)
+            verbose_print(f"Error: Folder already exists: {destination}{slash}{source_replaced}", 1)
         for file in contents[key]:
             try:
                 verbose_print(f"Copying {file}", 2)
-                shutil.copy2(key + "/" + file, destination + "/" + source_replaced)
+                shutil.copy2(key + slash + file, destination + slash + source_replaced)
             except PermissionError:
                 verbose_print(f"Permission Error copying {file}", 1)
             except OSError:
-                verbose_print(f"Invalid argument: {destination}/{source_replaced}, "
+                verbose_print(f"Invalid argument: {destination}{slash}{source_replaced}, "
                               f"possibly file of zero size. Skipping.", 1)
 
 
 # Get the OS type (Windows, Mac, Linux)
 platf = platform.system()
-# print(platf)
+if platf is "Windows":
+    slash = "\\"
+else:
+    slash = "/"
 if __name__ == '__main__':
     # If the program is run with no arguments, run as GUI application
     if len(sys.argv) == 1:
@@ -432,8 +435,7 @@ if __name__ == '__main__':
         # This also maps the arguments to a dictionary
         cli.check_switches()
         cli.src = cli.args["-s"]
-        cli.dst = cli.args["-d"] + str(cli.current_date.year) + "-" + \
-            str(cli.current_date.month) + "-" + str(cli.current_date.day) + ".1"
+        cli.dst = f'{cli.args["-d"]}{str(cli.current_date.year)}-{str(cli.current_date.month)}-{str(cli.current_date.day)}.1'
         # If the -a switch is used
         if "-a" in cli.args:
             # Get the baseline contents
@@ -447,18 +449,23 @@ if __name__ == '__main__':
         else:
             verbose_print("Getting baseline contents", 1)
             cli.baseline_contents = get_baseline(cli.args["-d"])
-            verbose_print("Hashing baseline contents", 1)
-            if "-h" in cli.args:
-                cli.baseline_hashes = get_hashes(cli.baseline_contents, cli.args["-h"])
-                verbose_print("Getting list of changed files", 1)
-                cli.source_contents = compare_hashes(cli.src, cli.baseline_hashes, cli.args["-h"])
+            if len(cli.baseline_contents) > 0:
+                verbose_print("Hashing baseline contents", 1)
+                if "-h" in cli.args:
+                    cli.baseline_hashes = get_hashes(cli.baseline_contents, cli.args["-h"])
+                    verbose_print("Getting list of changed files", 1)
+                    cli.source_contents = compare_hashes(cli.src, cli.baseline_hashes, cli.args["-h"])
+                else:
+                    cli.baseline_hashes = get_hashes(cli.baseline_contents)
+                    verbose_print("Getting list of changed files", 1)
+                    cli.source_contents = compare_hashes(cli.src, cli.baseline_hashes)
+                verbose_print("Copying contents to destination", 1)
+                copyfiles(cli.source_contents, cli.src, cli.dst)
+                verbose_print("Done", 1)
+                raise SystemExit
             else:
-                cli.baseline_hashes = get_hashes(cli.baseline_contents)
-                verbose_print("Getting list of changed files", 1)
-                cli.source_contents = compare_hashes(cli.src, cli.baseline_hashes)
-            verbose_print("Copying contents to destination", 1)
-            copyfiles(cli.source_contents, cli.src, cli.dst)
-            verbose_print("Done", 1)
-            raise SystemExit
+                verbose_print("No Baseline Contents. Exiting", 0)
+                raise SystemExit
+
     else:
         print("Fatal Error: No arguments provided.")
