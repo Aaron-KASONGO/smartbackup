@@ -395,7 +395,7 @@ def copyfiles(contents, source, destination):
     except FileExistsError:
         verbose_print("Backup for today found. Creating new backup", 1)
         dest_n = str(int(destination.split(".")[-1]) + 1)
-        copyfiles(contents, source, destination+"."+dest_n)
+        copyfiles(contents, source, destination.split(".")[0]+"."+dest_n)
         return
     printprogressbar(0, length, prefix='Progress:', suffix='Complete', length=50)
     for key in contents:
