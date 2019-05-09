@@ -23,13 +23,13 @@ SOFTWARE.
 """
 
 import hashlib
-import os
-import shutil
-import datetime
-import threading
-import platform
-import tkinter
-from tkinter import *
+from os import mkdir, walk
+from shutil import copy2
+from datetime import datetime
+from threading import Thread
+from platform import system
+from sys import argv
+from tkinter import Tk, Entry, Label, IntVar, Checkbutton, Button, W, E
 from pathlib import Path
 
 
@@ -114,7 +114,7 @@ class Gui:
         self.startButton.grid(row=18, column=0, columnspan=2)
 
     def newthread(self):
-        t = threading.Thread(name='child procs', target=self.start)
+        t = Thread(name='child procs', target=self.start)
         t.start()
 
     def start(self):
@@ -151,43 +151,43 @@ class Cli:
         self.baseline_hashes = {}
         self.src = ""
         self.dst = ""
-        self.current_date = datetime.datetime.now()
+        self.current_date = datetime.now()
         self.verbosity = 1
         self.log_error = False
 
     # Get all the switches used in the command line
     def check_switches(self):
         # The minimum arguments needed is 5. If there are less than 5, print the help text
-        if len(sys.argv) < 5:
+        if len(argv) < 5:
             print(self.helptxt)
             raise SystemExit
         # Else if 5 or more args are provided, get the values of the args and continue
         # Max number of args is 17, since q and v cannot be used together
-        elif len(sys.argv) < 18:
+        elif len(argv) < 18:
             # Dictionary assigned with all args and their values
             count = 0
-            for i in range(1, len(sys.argv)):
-                if "-" in sys.argv[i] and len(sys.argv[i]) == 2:
-                    if any(x in sys.argv[i] for x in self.switches):
-                        if sys.argv[i] == "-a":
-                            self.args[sys.argv[i]] = True
+            for i in range(1, len(argv)):
+                if "-" in argv[i] and len(argv[i]) == 2:
+                    if any(x in argv[i] for x in self.switches):
+                        if argv[i] == "-a":
+                            self.args[argv[i]] = True
                             count += 1
-                        elif sys.argv[i] == "-q":
-                            self.args[sys.argv[i]] = True
+                        elif argv[i] == "-q":
+                            self.args[argv[i]] = True
                             self.verbosity = 0
                             count += 1
-                        elif sys.argv[i] == "-v":
-                            self.args[sys.argv[i]] = True
+                        elif argv[i] == "-v":
+                            self.args[argv[i]] = True
                             count += 1
                             self.verbosity = 2
                         else:
-                            self.args[sys.argv[i]] = sys.argv[i + 1]
+                            self.args[argv[i]] = argv[i + 1]
                     else:
-                        print(f"Bad option {sys.argv[i]}. Quitting")
+                        print(f"Bad option {argv[i]}. Quitting")
                         raise SystemExit
             # check if the args dictionary matches what was given in the command
             # Minus 1 because we don't count the name of the program, add the count value back for correct number
-            if len(self.args) * 2 != len(sys.argv) - 1 + count:
+            if len(self.args) * 2 != len(argv) - 1 + count:
                 print("Malformed command. Possible spaces in source or destination paths. Use quotations around paths"
                       " if there are spaces.")
                 raise SystemExit
@@ -199,13 +199,8 @@ class Cli:
                 raise SystemExit
             # Else, a source directory is specified
             else:
-                # If the source directory uses backslashes
-                # if "\\" in self.args["-s"]:
-                    # Print error and quit the program
-                    # verbose_print("Please do not use '\\', use '/' instead", 1)
-                    # self.args["-s"] = self.args["-s"].replace("\\", "/")
                 # Else, if the source directory does not include a forward slash at the end of the directory
-                if "/" not in list(self.args["-s"][-1]) or '\\' not in list(self.args["-s"][-1]):
+                if "/" not in list(self.args["-s"])[-1] or '\\' not in list(self.args["-s"])[-1]:
                     # Print error, but continue
                     verbose_print("Missing slash at end of source directory. "
                                   "Please add a slash at the end of the source directory next time", 1)
@@ -218,13 +213,8 @@ class Cli:
                 raise SystemExit
             # Else, a destination directory is specified
             else:
-                # If the destination directory uses backslashes
-                # if "\\" in self.args["-d"]:
-                    # Print error and quit
-                    # verbose_print("Please do not use '\\', use '/' instead", 1)
-                    # self.args["-d"] = self.args["-d"].replace("\\", "/")
                 # If the destination directory does not include a forward slash at the end of the directory
-                if "/" not in list(self.args["-d"][-1]) or "\\" not in list(self.args["-d"][-1]):
+                if "/" not in list(self.args["-d"])[-1] or "\\" not in list(self.args["-d"])[-1]:
                     # Print error, but continue
                     verbose_print("Missing slash at the end of destination directory. "
                                   "Please add a slash at the end of the destination directory next time", 1)
@@ -236,7 +226,7 @@ class Cli:
 
 
 def write_log(msg, path):
-    now = datetime.datetime.now()
+    now = datetime.now()
     write_now = f"{now.year}-{now.month}-{now.day} {now.hour}:{now.minute}:{now.second}"
     outfile = open(path, "a")
     outfile.write(f"{write_now} - {msg}\n")
@@ -283,7 +273,7 @@ def verbose_print(msg, level):
 def get_baseline(folder):
     temp_baseline = {}
     dir_list = []
-    for (dirpath, dirnames, filenames) in os.walk(folder):
+    for (dirpath, dirnames, filenames) in walk(folder):
         temp = []
         for dirs in dirnames:
             # print(dirs)
@@ -346,7 +336,7 @@ def compare_hashes(folder, baseline_hashes, algorithm="sha1"):
     algorithm = get_hash_type(algorithm)
     num_dirs = []
     contents = {}
-    for (dirpath, dirnames, filenames) in os.walk(folder):
+    for (dirpath, dirnames, filenames) in walk(folder):
         temp = []
         for dirs in dirnames:
             num_dirs.append(dirs)
@@ -386,7 +376,7 @@ def copyfiles(contents, source, destination):
     try:
         # Create the main backup folder
         verbose_print(f"Creating folder {destination}", 1)
-        os.mkdir(destination)
+        mkdir(destination)
     except FileNotFoundError:
         print(f"Error, could not make directory {destination}. "
               f"Path may be wrong. Make sure your destination already exists")
@@ -400,7 +390,7 @@ def copyfiles(contents, source, destination):
         source_replaced = key.replace(source, "")
         try:
             verbose_print(f"Creating folder {destination}{slash}{source_replaced}", 1)
-            os.mkdir(destination + slash + source_replaced)
+            mkdir(destination + slash + source_replaced)
         except FileNotFoundError:
             verbose_print(f"Error, could not make directory {destination}{slash}{source_replaced}", 1)
         except FileExistsError:
@@ -408,7 +398,7 @@ def copyfiles(contents, source, destination):
         for file in contents[key]:
             try:
                 verbose_print(f"Copying {file}", 2)
-                shutil.copy2(key + slash + file, destination + slash + source_replaced)
+                copy2(key + slash + file, destination + slash + source_replaced)
             except PermissionError:
                 verbose_print(f"Permission Error copying {file}", 1)
             except OSError:
@@ -417,25 +407,26 @@ def copyfiles(contents, source, destination):
 
 
 # Get the OS type (Windows, Mac, Linux)
-platf = platform.system()
+platf = system()
 if platf is "Windows":
     slash = "\\"
 else:
     slash = "/"
 if __name__ == '__main__':
     # If the program is run with no arguments, run as GUI application
-    if len(sys.argv) == 1:
-        root = tkinter.Tk()
+    if len(argv) == 1:
+        root = Tk()
         gui = Gui(root)
         root.mainloop()
     # If there are arguments provided, run as CLI program
-    elif len(sys.argv) > 1:
+    elif len(argv) > 1:
         cli = Cli()
         # Check that the program was run with valid switches and arguments
         # This also maps the arguments to a dictionary
         cli.check_switches()
         cli.src = cli.args["-s"]
-        cli.dst = f'{cli.args["-d"]}{str(cli.current_date.year)}-{str(cli.current_date.month)}-{str(cli.current_date.day)}.1'
+        cli.dst = f'{cli.args["-d"]}{str(cli.current_date.year)}-{str(cli.current_date.month)}-' \
+            f'{str(cli.current_date.day)}.1'
         # If the -a switch is used
         if "-a" in cli.args:
             # Get the baseline contents
