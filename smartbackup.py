@@ -200,7 +200,7 @@ class Cli:
             # Else, a source directory is specified
             else:
                 # Else, if the source directory does not include a forward slash at the end of the directory
-                if "/" not in list(self.args["-s"])[-1] or '\\' not in list(self.args["-s"])[-1]:
+                if "/" not in list(self.args["-s"])[-1] and '\\' not in list(self.args["-s"])[-1]:
                     # Print error, but continue
                     verbose_print("Missing slash at end of source directory. "
                                   "Please add a slash at the end of the source directory next time", 1)
@@ -214,7 +214,7 @@ class Cli:
             # Else, a destination directory is specified
             else:
                 # If the destination directory does not include a forward slash at the end of the directory
-                if "/" not in list(self.args["-d"])[-1] or "\\" not in list(self.args["-d"])[-1]:
+                if "/" not in list(self.args["-d"])[-1] and "\\" not in list(self.args["-d"])[-1]:
                     # Print error, but continue
                     verbose_print("Missing slash at the end of destination directory. "
                                   "Please add a slash at the end of the destination directory next time", 1)
@@ -303,11 +303,19 @@ def get_hash_type(algorithm="sha1"):
         return algorithm
 
 
+def get_len(array):
+    length = 0
+    for item in array:
+        length += len(array[item])
+    return length
+
+
 def get_hashes(contents, algorithm="sha1"):
     algorithm = get_hash_type(algorithm)
     verbose_print("Hashing all baseline contents", 1)
     hashes = []
-    ln = len(contents)
+    ln = get_len(contents)
+    progress = 0
     printprogressbar(0, ln, prefix='Progress:', suffix='Complete', length=50)
     for i, key in enumerate(contents):
         for thing in contents[key]:
@@ -328,7 +336,8 @@ def get_hashes(contents, algorithm="sha1"):
                 verbose_print(f"Permission Error for file {file}: skipping", 1)
             except OSError:
                 verbose_print(f"OS Error for {file}: skipping", 1)
-        printprogressbar(i + 1, ln, prefix='Progress:', suffix='Complete', length=50)
+            printprogressbar(progress + 1, ln, prefix='Progress:', suffix='Complete', length=50)
+            progress += 1
     return frozenset(hashes)
 
 
@@ -373,6 +382,8 @@ def compare_hashes(folder, baseline_hashes, algorithm="sha1"):
 
 
 def copyfiles(contents, source, destination):
+    length = get_len(contents)
+    progress = 0
     try:
         # Create the main backup folder
         verbose_print(f"Creating folder {destination}", 1)
@@ -386,24 +397,29 @@ def copyfiles(contents, source, destination):
         dest_n = str(int(destination.split(".")[-1]) + 1)
         copyfiles(contents, source, destination+"."+dest_n)
         return
+    printprogressbar(0, length, prefix='Progress:', suffix='Complete', length=50)
     for key in contents:
         source_replaced = key.replace(source, "")
         try:
-            verbose_print(f"Creating folder {destination}{slash}{source_replaced}", 1)
+            # verbose_print(f"Creating folder {destination}{slash}{source_replaced}", 1)
             mkdir(destination + slash + source_replaced)
         except FileNotFoundError:
-            verbose_print(f"Error, could not make directory {destination}{slash}{source_replaced}", 1)
+            pass
+            # verbose_print(f"Error, could not make directory {destination}{slash}{source_replaced}", 1)
         except FileExistsError:
-            verbose_print(f"Error: Folder already exists: {destination}{slash}{source_replaced}", 1)
+            pass
+            # verbose_print(f"Error: Folder already exists: {destination}{slash}{source_replaced}", 1)
         for file in contents[key]:
             try:
-                verbose_print(f"Copying {file}", 2)
+                # verbose_print(f"Copying {file}", 2)
                 copy2(key + slash + file, destination + slash + source_replaced)
             except PermissionError:
                 verbose_print(f"Permission Error copying {file}", 1)
             except OSError:
                 verbose_print(f"Invalid argument: {destination}{slash}{source_replaced}, "
                               f"possibly file of zero size. Skipping.", 1)
+            printprogressbar(progress+1, length, prefix='Progress:', suffix='Complete', length=50)
+            progress += 1
 
 
 # Get the OS type (Windows, Mac, Linux)
@@ -457,6 +473,5 @@ if __name__ == '__main__':
             else:
                 verbose_print("No Baseline Contents. Exiting", 0)
                 raise SystemExit
-
     else:
         print("Fatal Error: No arguments provided.")
