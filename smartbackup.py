@@ -276,11 +276,9 @@ def get_baseline(folder):
     for (dirpath, dirnames, filenames) in walk(folder):
         temp = []
         for dirs in dirnames:
-            # print(dirs)
             # Don't need to append dirs to the list since the recursive get already does that
             dir_list.append(dirs)
         for file in filenames:
-            # print(file)
             temp.append(file)
         temp_baseline[folder] = temp
         break
@@ -311,17 +309,15 @@ def get_len(array):
 
 
 def get_hashes(contents, algorithm="sha1"):
-    algorithm = get_hash_type(algorithm)
-    verbose_print("Hashing all baseline contents", 1)
     hashes = []
     ln = get_len(contents)
     progress = 0
     printprogressbar(0, ln, prefix='Progress:', suffix='Complete', length=50)
-    for i, key in enumerate(contents):
+    for key in contents:
         for thing in contents[key]:
             file = key + slash + thing
             verbose_print("Hashing " + file, 2)
-            hsh = algorithm
+            hsh = get_hash_type(algorithm)
             try:
                 with open(file, "rb") as f:
                     while True:
@@ -342,7 +338,6 @@ def get_hashes(contents, algorithm="sha1"):
 
 
 def compare_hashes(folder, baseline_hashes, algorithm="sha1"):
-    algorithm = get_hash_type(algorithm)
     num_dirs = []
     contents = {}
     for (dirpath, dirnames, filenames) in walk(folder):
@@ -351,7 +346,7 @@ def compare_hashes(folder, baseline_hashes, algorithm="sha1"):
             num_dirs.append(dirs)
         for file in filenames:
             rf = folder + slash + file
-            hsh = algorithm
+            hsh = get_hash_type(algorithm)
             try:
                 with open(rf, "rb") as f:
                     while True:
@@ -359,17 +354,15 @@ def compare_hashes(folder, baseline_hashes, algorithm="sha1"):
                         if not data:
                             break
                         hsh.update(data)
-                    # for bb in iter(lambda: f.read(4096).encode("utf-8"), b""):
-                    #    sha256.update(bb)
                 if hsh.hexdigest() not in baseline_hashes:
-                    verbose_print("New Hash found for file " + str(file), 1)
+                    verbose_print(f"New Hash found for file {str(file)}", 1)
                     temp.append(file)
             except UnicodeDecodeError:
-                verbose_print("Cannot decode " + rf + ": skipping", 1)
+                verbose_print(f"Cannot decode {rf}: skipping", 1)
             except PermissionError:
-                verbose_print("Permission error for " + rf + ": skipping", 1)
+                verbose_print(f"Permission error for {rf}: skipping", 1)
             except OSError:
-                verbose_print("OS Error for " + rf + ": skipping", 1)
+                verbose_print(f"OS Error for {rf}: skipping", 1)
         # Hiding this part because it needs to create all the dirs and not just dirs that have contents
         # if len(temp) > 0:
         #    contents[folder] = temp
@@ -401,17 +394,17 @@ def copyfiles(contents, source, destination):
     for key in contents:
         source_replaced = key.replace(source, "")
         try:
-            # verbose_print(f"Creating folder {destination}{slash}{source_replaced}", 1)
+            verbose_print(f"Creating folder {destination}{slash}{source_replaced}", 1)
             mkdir(destination + slash + source_replaced)
         except FileNotFoundError:
             pass
-            # verbose_print(f"Error, could not make directory {destination}{slash}{source_replaced}", 1)
+            verbose_print(f"Error, could not make directory {destination}{slash}{source_replaced}", 1)
         except FileExistsError:
             pass
-            # verbose_print(f"Error: Folder already exists: {destination}{slash}{source_replaced}", 1)
+            verbose_print(f"Error: Folder already exists: {destination}{slash}{source_replaced}", 1)
         for file in contents[key]:
             try:
-                # verbose_print(f"Copying {file}", 2)
+                verbose_print(f"Copying {file}", 2)
                 copy2(key + slash + file, destination + slash + source_replaced)
             except PermissionError:
                 verbose_print(f"Permission Error copying {file}", 1)
@@ -466,10 +459,14 @@ if __name__ == '__main__':
                     cli.baseline_hashes = get_hashes(cli.baseline_contents)
                     verbose_print("Getting list of changed files", 1)
                     cli.source_contents = compare_hashes(cli.src, cli.baseline_hashes)
-                verbose_print("Copying contents to destination", 1)
-                copyfiles(cli.source_contents, cli.src, cli.dst)
-                verbose_print("Done", 1)
-                raise SystemExit
+                if get_len(cli.source_contents) > 0:
+                    verbose_print("Copying contents to destination", 1)
+                    copyfiles(cli.source_contents, cli.src, cli.dst)
+                    verbose_print("Done", 1)
+                    raise SystemExit
+                else:
+                    verbose_print("No files have been changed. Exiting.", 0)
+                    raise SystemExit
             else:
                 verbose_print("No Baseline Contents. Exiting", 0)
                 raise SystemExit
