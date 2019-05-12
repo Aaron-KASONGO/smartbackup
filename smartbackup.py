@@ -26,6 +26,7 @@ import hashlib
 from os import mkdir, walk
 from shutil import copy2
 from datetime import datetime
+import time
 from threading import Thread
 from platform import system
 from sys import argv
@@ -132,10 +133,7 @@ class Cli:
                 -d          Destination of the directory you want to copy to (REQUIRED)
                 -h          Specify hash type to use for file validation
                                 Supported hash types: MD5, SHA1, SHA224, SHA256, SHA384, SHA512
-                -b          Specify the beginning date you want to check backups from (yyyy-mm-dd) -- not implemented
                 -a          Skip "smart" detection, copy all files regardless of changes
-                -u          Specify username for network shares -- not implemented
-                -p          Specify password for network shares -- not implemented
                 -q          Run silently, no output, faster runtime
                 -v          Run verbose, output everything to console (very slow)
                 -l          Log output to a file, specify the directory. Use with -v to get all output written to file
