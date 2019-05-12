@@ -8,7 +8,6 @@ Python 3.6 or greater
   
 ## Usage  
   
-#### CLI
 `py smartbackup.py -s [Path to Source] -d [Path to Destination] [Options]` 
   
 Options  
@@ -20,8 +19,4 @@ Options
 `-v`  Run in verbose mode, output more to console (slower)  
 `-l`  Log output to a file. Specify the directory immediately after option. Use with -v to get all output written to file
 
-Note: Directories or files with spaces must use quotations around the entire path.
-
-#### GUI  
-  
-`py smartbackup.py`
+Note: Directories or files with spaces must use quotations around the entire path.  
