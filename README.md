@@ -20,3 +20,9 @@ Options
 `-l`  Log output to a file. Specify the directory immediately after option. Use with -v to get all output written to file
 
 Note: Directories or files with spaces must use quotations around the entire path.  
+  
+## Output  
+  
+A folder will be created in the `destination folder`, named in the format `[currentDate].[iteration]`, where `currentDate` is `yyyy-mm-dd` and `iteration` is the number of times a backup has ran in the same day. Iteration will automatically increment with each successive backup in a day.  
+  
+The whole `source folder` folder tree will be recreated in the destination folder, even if there are no files to copy into them. This is done as a safeguard if subfolders have contents while superfolders have none.
