@@ -78,7 +78,7 @@ class Cli:
             Notes
                 Directories or files with spaces must use quotations around the entire path.
             """
-        self.switches = ["s", "d", "h", "b", "a", "u", "p", "q", "v", "l"]
+        self.switches = ["s", "d", "h", "a", "q", "v", "l"]
         # Stores the args that were provided
         self.args = {}
         self.baseline_contents = {}
