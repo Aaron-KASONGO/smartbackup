@@ -60,24 +60,24 @@ def printprogressbar(iteration, total, prefix='', suffix='', decimals=1, length=
 
 
 class Cli:
+    helptxt = """
+                Usage: smartbackup.py -s [source] -d [destination] [options]
+
+                Options:
+                    -s          Source of the directory you want to backup  (REQUIRED)
+                    -d          Destination of the directory you want to copy to (REQUIRED)
+                    -h          Specify hash type to use for file validation
+                                    Supported hash types: MD5, SHA1, SHA224, SHA256, SHA384, SHA512
+                    -a          Skip "smart" detection, copy all files regardless of changes
+                    -q          Run silently, no output, faster runtime
+                    -v          Run verbose, output everything to console (very slow)
+                    -l          Log output to a file, specify the directory. Use with -v to get all output written to file
+
+                Notes
+                    Directories or files with spaces must use quotations around the entire path.
+                """
 
     def __init__(self):
-        self.helptxt = """
-            Usage: smartbackup.py -s [source] -d [destination] [options]
-
-            Options:
-                -s          Source of the directory you want to backup  (REQUIRED)
-                -d          Destination of the directory you want to copy to (REQUIRED)
-                -h          Specify hash type to use for file validation
-                                Supported hash types: MD5, SHA1, SHA224, SHA256, SHA384, SHA512
-                -a          Skip "smart" detection, copy all files regardless of changes
-                -q          Run silently, no output, faster runtime
-                -v          Run verbose, output everything to console (very slow)
-                -l          Log output to a file, specify the directory. Use with -v to get all output written to file
-
-            Notes
-                Directories or files with spaces must use quotations around the entire path.
-            """
         self.switches = ["s", "d", "h", "a", "q", "v", "l"]
         # Stores the args that were provided
         self.args = {}
@@ -361,8 +361,7 @@ else:
 if __name__ == '__main__':
     # If the program is run with no arguments, run as GUI application
     if len(argv) == 1:
-        cli = Cli()
-        print(cli.helptxt)
+        print(Cli.helptxt)
         raise SystemExit
         # root = Tk()
         # gui = Gui(root)
@@ -411,4 +410,4 @@ if __name__ == '__main__':
                 verbose_print("No Baseline Contents. Exiting", 0)
                 raise SystemExit
     else:
-        print("Fatal Error: No arguments provided.")
+        print("Error: No arguments provided.")
