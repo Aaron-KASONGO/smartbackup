@@ -4,11 +4,11 @@ Create a differential or full backup of a source directory to a destination dire
   
 ## Requirements  
   
-Python 3.6 or greater  
+Python 3.6 or greater
   
 ## Usage  
   
-`py smartbackup.py -s [Path to Source] -d [Path to Destination] [Options]` 
+`py| smartbackup.py -s [Path to Source] -d [Path to Destination] [Options]` 
   
 Options  
 `-s`  Source of the directory you want to backup (REQUIRED)  

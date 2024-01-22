@@ -205,7 +205,9 @@ def verbose_print(msg, level):
 
 
 # Get baseline of all contents in folder
-def get_baseline(folder):
+def get_baseline(folder):   # print("################ -o- ################")
+                        # print(cli.baseline_contents)
+                        # print("################ -o- ################")
     temp_baseline = {}
     dir_list = []
     for (dirpath, dirnames, filenames) in walk(folder):
@@ -247,7 +249,7 @@ def get_hashes(contents, algorithm="sha1"):
     hashes = []
     ln = get_len(contents)
     progress = 0
-    printprogressbar(0, ln, prefix='Progress:', suffix='Complete', length=50)
+    # printprogressbar(0, ln, prefix='Progress:', suffix='Complete', length=50)
     for key in contents:
         for thing in contents[key]:
             file = key + slash + thing
@@ -269,7 +271,7 @@ def get_hashes(contents, algorithm="sha1"):
                 verbose_print(f"Permission Error for file {file}: skipping", 1)
             except OSError:
                 verbose_print(f"OS Error for {file}: skipping", 1)
-            printprogressbar(progress + 1, ln, prefix='Progress:', suffix='Complete', length=50)
+            # printprogressbar(progress + 1, ln, prefix='Progress:', suffix='Complete', length=50)
             progress += 1
     return frozenset(hashes)
 
@@ -316,32 +318,32 @@ def copyfiles(contents, source, destination):
     progress = 0
     try:
         # Create the main backup folder
-        verbose_print(f"Creating folder {destination}", 1)
+        verbose_print(f"Création du dossier {destination}", 1)
         mkdir(destination)
     except FileNotFoundError:
         print(f"Error, could not make directory {destination}. "
               f"Path may be wrong. Make sure your destination already exists")
         raise SystemExit
     except FileExistsError:
-        verbose_print("Backup for today found. Creating new backup", 1)
+        verbose_print("Sauvegarde existant de la journée. Création d'une nouvelle sauvegarde", 1)
         dest_n = str(int(destination.split(".")[-1]) + 1)
         copyfiles(contents, source, destination.split(".")[0]+"."+dest_n)
         return
-    printprogressbar(0, length, prefix='Progress:', suffix='Complete', length=50)
+    printprogressbar(0, length, prefix='Progression:', suffix='Complete', length=50)
     for key in contents:
         source_replaced = key.replace(source, "")
         try:
-            verbose_print(f"Creating folder {destination}{slash}{source_replaced}", 1)
+            verbose_print(f"Création du dossier {destination}{slash}{source_replaced}", 1)
             mkdir(destination + slash + source_replaced)
         except FileNotFoundError:
             pass
             verbose_print(f"Error, could not make directory {destination}{slash}{source_replaced}", 1)
         except FileExistsError:
             pass
-            verbose_print(f"Error: Folder already exists: {destination}{slash}{source_replaced}", 1)
+            verbose_print(f"Erreur: Fichier existant: {destination}{slash}{source_replaced}", 1)
         for file in contents[key]:
             try:
-                verbose_print(f"Copying {file}", 2)
+                verbose_print(f"En cours de copie {file}", 2)
                 copy2(key + slash + file, destination + slash + source_replaced)
             except PermissionError:
                 verbose_print(f"Permission Error copying {file}", 1)
@@ -368,46 +370,51 @@ if __name__ == '__main__':
         # root.mainloop()
     # If there are arguments provided, run as CLI program
     elif len(argv) > 1:
-        cli = Cli()
-        # Check that the program was run with valid switches and arguments
-        # This also maps the arguments to a dictionary
-        cli.check_switches()
-        cli.src = cli.args["-s"]
-        cli.dst = f'{cli.args["-d"]}{str(cli.current_date.year)}-{str(cli.current_date.month)}-' \
-            f'{str(cli.current_date.day)}.1'
-        # If the -a switch is used
-        if "-a" in cli.args:
-            # Get the baseline contents
-            verbose_print("Getting content to copy", 1)
-            cli.source_contents = get_baseline(cli.src)
-            # Copy all files from source to destination
-            verbose_print("Copying contents to destination", 1)
-            copyfiles(cli.source_contents, cli.src, cli.dst)
-            verbose_print("Done", 1)
-            raise SystemExit
-        else:
-            verbose_print("Getting baseline contents", 1)
-            cli.baseline_contents = get_baseline(cli.args["-d"])
-            if len(cli.baseline_contents) > 0:
-                verbose_print("Hashing baseline contents", 1)
-                if "-h" in cli.args:
-                    cli.baseline_hashes = get_hashes(cli.baseline_contents, cli.args["-h"])
-                    verbose_print("Getting list of changed files", 1)
-                    cli.source_contents = compare_hashes(cli.src, cli.baseline_hashes, cli.args["-h"])
-                else:
-                    cli.baseline_hashes = get_hashes(cli.baseline_contents)
-                    verbose_print("Getting list of changed files", 1)
-                    cli.source_contents = compare_hashes(cli.src, cli.baseline_hashes)
-                if get_len(cli.source_contents) > 0:
-                    verbose_print("Copying contents to destination", 1)
-                    copyfiles(cli.source_contents, cli.src, cli.dst)
-                    verbose_print("Done", 1)
-                    raise SystemExit
-                else:
-                    verbose_print("No files have been changed. Exiting.", 0)
-                    raise SystemExit
-            else:
-                verbose_print("No Baseline Contents. Exiting", 0)
+        while True:
+            cli = Cli()
+            # Check that the program was run with valid switches and arguments
+            # This also maps the arguments to a dictionary
+            cli.check_switches()
+            cli.src = cli.args["-s"]
+            cli.dst = f'{cli.args["-d"]}{str(cli.current_date.year)}-{str(cli.current_date.month)}-' \
+                f'{str(cli.current_date.day)}.1'
+            # If the -a switch is used
+            if "-a" in cli.args:
+                # Get the baseline contents
+                verbose_print("Getting content to copy", 1)
+                cli.source_contents = get_baseline(cli.src)
+                # Copy all files from source to destination
+                verbose_print("Copying contents to destination", 1)
+                copyfiles(cli.source_contents, cli.src, cli.dst)
+                verbose_print("Done", 1)
                 raise SystemExit
+            else:
+                # verbose_print("Getting baseline contents", 1)
+                cli.baseline_contents = get_baseline(cli.args["-d"])
+                if len(cli.baseline_contents) > 0:
+                    # verbose_print("Hashing baseline contents", 1)
+                    if "-h" in cli.args:
+                        cli.baseline_hashes = get_hashes(cli.baseline_contents, cli.args["-h"])
+                        # verbose_print("Getting list of changed files", 1)
+                        cli.source_contents = compare_hashes(cli.src, cli.baseline_hashes, cli.args["-h"])
+                    else:
+                        # print("################ -o- ################")
+                        # print(cli.baseline_contents)
+                        # print("################ -o- ################")
+                        cli.baseline_hashes = get_hashes(cli.baseline_contents)
+                        # verbose_print("Getting list of changed files", 1)
+                        cli.source_contents = compare_hashes(cli.src, cli.baseline_hashes)
+                    if get_len(cli.source_contents) > 0:
+                        # verbose_print("Copying contents to destination", 1)
+                        copyfiles(cli.source_contents, cli.src, cli.dst)
+                        # verbose_print("Done", 1)
+                        # raise SystemExit
+                    else:
+                        # verbose_print("No files have been changed. Exiting.", 0)
+                        pass
+                        # raise SystemExit
+                else:
+                    verbose_print("No Baseline Contents. Exiting", 0)
+                    raise SystemExit
     else:
         print("Error: No arguments provided.")
